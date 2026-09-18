@@ -824,3 +824,136 @@ def test_create_transaction_with_custom_date():
     assert data["category"] == "Shopping"
     assert data["description"] == "New shoes"
     assert "2026-08-15" in data["date"]
+
+
+def test_filter_transactions_by_type():
+    client.post(
+        "/users/register",
+        json={
+            "username": "filteruser",
+            "email": "filteruser@example.com",
+            "password": "password123"
+        }
+    )
+
+    login_response = client.post(
+        "/users/login",
+        json={
+            "email": "filteruser@example.com",
+            "password": "password123"
+        }
+    )
+
+    token = login_response.json()["access_token"]
+
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+
+    client.post(
+        "/transactions",
+        headers=headers,
+        json={
+            "amount": 5000,
+            "transaction_type": "income",
+            "category": "Salary",
+            "description": "Monthly salary"
+        }
+    )
+
+    client.post(
+        "/transactions",
+        headers=headers,
+        json={
+            "amount": 1000,
+            "transaction_type": "expense",
+            "category": "Food",
+            "description": "Groceries"
+        }
+    )
+
+    response = client.get(
+        "/transactions?transaction_type=expense",
+        headers=headers
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]["transaction_type"] == "expense"
+    assert data[0]["category"] == "Food"
+
+
+def test_filter_transactions_by_category():
+    client.post(
+        "/users/register",
+        json={
+            "username": "categoryuser",
+            "email": "categoryuser@example.com",
+            "password": "password123"
+        }
+    )
+
+    login_response = client.post(
+        "/users/login",
+        json={
+            "email": "categoryuser@example.com",
+            "password": "password123"
+        }
+    )
+
+    token = login_response.json()["access_token"]
+
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+
+    client.post(
+        "/transactions",
+        headers=headers,
+        json={
+            "amount": 500,
+            "transaction_type": "expense",
+            "category": "Food",
+            "description": "Lunch"
+        }
+    )
+
+    client.post(
+        "/transactions",
+        headers=headers,
+        json={
+            "amount": 1000,
+            "transaction_type": "expense",
+            "category": "Shopping",
+            "description": "Shoes"
+        }
+    )
+
+    client.post(
+        "/transactions",
+        headers=headers,
+        json={
+            "amount": 700,
+            "transaction_type": "expense",
+            "category": "Food",
+            "description": "Dinner"
+        }
+    )
+
+    response = client.get(
+        "/transactions?category=Food",
+        headers=headers
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 2
+    assert all(
+        transaction["category"] == "Food"
+        for transaction in data
+    )

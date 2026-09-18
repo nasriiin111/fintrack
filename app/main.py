@@ -130,15 +130,26 @@ def create_transaction(
 
 @app.get("/transactions", response_model=list[schemas.TransactionResponse])
 def get_transactions(
+    transaction_type: str | None = None,
+    category: str | None = None,
     user_id: int = Depends(current_user_id),
     db: Session = Depends(get_db)
 ):
-
-    transactions = db.query(models.Transaction).filter(
+    query = db.query(models.Transaction).filter(
         models.Transaction.user_id == user_id
-    ).all()
+    )
 
-    return transactions
+    if transaction_type:
+        query = query.filter(
+            models.Transaction.transaction_type == transaction_type
+        )
+
+    if category:
+        query = query.filter(
+            models.Transaction.category == category
+        )
+
+    return query.all()
 
 @app.get("/transactions/{transaction_id}", response_model=schemas.TransactionResponse)
 def get_transaction(
