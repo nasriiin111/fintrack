@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+from typing import Literal
 
 from .database import engine, Base, get_db
 from . import models, schemas
@@ -132,6 +133,8 @@ def create_transaction(
 def get_transactions(
     transaction_type: str | None = None,
     category: str | None = None,
+    sort_by: Literal["date", "amount"] | None = None,
+    order: Literal["asc", "desc"] = "asc",
     user_id: int = Depends(current_user_id),
     db: Session = Depends(get_db)
 ):
@@ -147,6 +150,20 @@ def get_transactions(
     if category:
         query = query.filter(
             models.Transaction.category == category
+        )
+
+    if sort_by == "date":
+        query = query.order_by(
+            models.Transaction.date.desc()
+            if order == "desc"
+            else models.Transaction.date.asc()
+        )
+
+    elif sort_by == "amount":
+        query = query.order_by(
+            models.Transaction.amount.desc()
+            if order == "desc"
+            else models.Transaction.amount.asc()
         )
 
     return query.all()

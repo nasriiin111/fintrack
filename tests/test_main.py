@@ -957,3 +957,125 @@ def test_filter_transactions_by_category():
         transaction["category"] == "Food"
         for transaction in data
     )
+
+
+def test_sort_transactions_by_amount():
+    register_response = client.post(
+        "/users/register",
+        json={
+            "username": "sortuser",
+            "email": "sort@example.com",
+            "password": "password123"
+        }
+    )
+
+    assert register_response.status_code == 200
+
+    login_response = client.post(
+        "/users/login",
+        json={
+            "email": "sort@example.com",
+            "password": "password123"
+        }
+    )
+
+    token = login_response.json()["access_token"]
+
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+
+    client.post(
+        "/transactions",
+        json={
+            "amount": 500,
+            "transaction_type": "expense",
+            "category": "Food"
+        },
+        headers=headers
+    )
+
+    client.post(
+        "/transactions",
+        json={
+            "amount": 1500,
+            "transaction_type": "expense",
+            "category": "Shopping"
+        },
+        headers=headers
+    )
+
+    response = client.get(
+        "/transactions?sort_by=amount&order=desc",
+        headers=headers
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 2
+    assert data[0]["amount"] == "1500.00"
+    assert data[1]["amount"] == "500.00"
+
+
+def test_sort_transactions_by_date():
+    register_response = client.post(
+        "/users/register",
+        json={
+            "username": "dateuser",
+            "email": "date@example.com",
+            "password": "password123"
+        }
+    )
+
+    assert register_response.status_code == 200
+
+    login_response = client.post(
+        "/users/login",
+        json={
+            "email": "date@example.com",
+            "password": "password123"
+        }
+    )
+
+    token = login_response.json()["access_token"]
+
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+
+    client.post(
+        "/transactions",
+        json={
+            "amount": 1000,
+            "transaction_type": "expense",
+            "category": "Food",
+            "date": "2026-01-15T10:00:00"
+        },
+        headers=headers
+    )
+
+    client.post(
+        "/transactions",
+        json={
+            "amount": 2000,
+            "transaction_type": "expense",
+            "category": "Shopping",
+            "date": "2026-03-15T10:00:00"
+        },
+        headers=headers
+    )
+
+    response = client.get(
+        "/transactions?sort_by=date&order=desc",
+        headers=headers
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 2
+    assert data[0]["amount"] == "2000.00"
+    assert data[1]["amount"] == "1000.00"
