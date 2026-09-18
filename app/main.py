@@ -118,7 +118,8 @@ def create_transaction(
         amount=transaction.amount,
         transaction_type=transaction.transaction_type,
         category=transaction.category,
-        description=transaction.description
+        description=transaction.description,
+        date=transaction.date
     )
 
     db.add(new_transaction)

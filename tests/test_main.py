@@ -782,3 +782,45 @@ def test_analytics_monthly():
 
     assert data[month]["income"] == 10000.0
     assert data[month]["expense"] == 3000.0
+
+
+def test_create_transaction_with_custom_date():
+    client.post(
+        "/users/register",
+        json={
+            "username": "dateuser",
+            "email": "dateuser@example.com",
+            "password": "password123"
+        }
+    )
+
+    login_response = client.post(
+        "/users/login",
+        json={
+            "email": "dateuser@example.com",
+            "password": "password123"
+        }
+    )
+
+    token = login_response.json()["access_token"]
+
+    response = client.post(
+        "/transactions",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "amount": 1500,
+            "transaction_type": "expense",
+            "category": "Shopping",
+            "description": "New shoes",
+            "date": "2026-08-15T10:30:00"
+        }
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["amount"] == "1500.00"
+    assert data["category"] == "Shopping"
+    assert data["description"] == "New shoes"
+    assert "2026-08-15" in data["date"]

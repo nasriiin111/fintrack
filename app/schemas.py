@@ -23,6 +23,7 @@ class TransactionCreate(BaseModel):
     transaction_type: Literal["income", "expense"]
     category: str
     description: str | None = None
+    date: datetime | None = None
 
 
 class TransactionResponse(BaseModel):
